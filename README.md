@@ -1,4 +1,4 @@
-                         Nexus AI 
+NEXUS
 
 1. Cyberpunk / Futuristic (Terminal Style)
 NEXUS // AI Core v3.1
