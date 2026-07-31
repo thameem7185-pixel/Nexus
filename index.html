@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>NEXUS // AI TERMINAL</title>
-  <meta name="google-site-verification" content="w0feO5K4DnBJ77LXzc716sBOY_eHKm1w5dNhVnyfSRQ" />
+<meta name="google-site-verification" content="w0feO5K4DnBJ77LXzc716sBOY_eHKm1w5dNhVnyfSRQ" />
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
 
@@ -33,7 +33,6 @@
     overflow: hidden;
   }
 
-  /* Scanline overlay */
   body::before {
     content: '';
     position: fixed;
@@ -49,7 +48,6 @@
     z-index: 9999;
   }
 
-  /* Grid background */
   body::after {
     content: '';
     position: fixed;
@@ -65,13 +63,12 @@
   #app {
     position: relative;
     z-index: 1;
-    height: 100vh;   /* fallback for older browsers */
-    height: 100dvh;  /* real visible viewport on mobile (excludes address bar) */
+    height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
   }
 
-  /* ── HEADER ── */
   #header {
     display: flex;
     align-items: center;
@@ -147,7 +144,6 @@
     font-size: 0.75rem;
   }
 
-  /* ── API KEY BANNER ── */
   #api-banner {
     background: linear-gradient(90deg, #1a0a00, #0a0015, #001a0a);
     border-bottom: 1px solid var(--neon-pink);
@@ -172,14 +168,12 @@
     white-space: nowrap;
   }
 
-  /* ── BODY LAYOUT ── */
   #body {
     flex: 1;
     display: flex;
     overflow: hidden;
   }
 
-  /* ── SIDEBAR ── */
   #sidebar {
     width: 200px;
     border-right: 1px solid var(--panel-border);
@@ -263,7 +257,6 @@
   .stat-label { color: var(--text-dim); }
   .stat-value { color: var(--neon-green); }
 
-  /* ── MAIN PANEL ── */
   #main {
     flex: 1;
     display: flex;
@@ -271,7 +264,6 @@
     overflow: hidden;
   }
 
-  /* ── CHAT WINDOW ── */
   #chat-window {
     flex: 1;
     overflow-y: auto;
@@ -445,7 +437,6 @@
   }
   .dl-btn:hover { background: var(--neon-pink); color: var(--dark-bg); }
 
-  /* ── THINKING INDICATOR ── */
   .thinking {
     display: flex;
     align-items: center;
@@ -474,7 +465,6 @@
     50% { opacity:1; }
   }
 
-  /* ── INPUT BAR ── */
   #input-bar {
     border-top: 1px solid var(--panel-border);
     padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
@@ -636,7 +626,6 @@
     box-shadow: 0 0 8px var(--neon-yellow), 0 0 20px #ffff0040;
   }
 
-  /* ── ATTACHMENTS PREVIEW ── */
   #attachments-row {
     display: none;
     flex-wrap: wrap;
@@ -686,7 +675,6 @@
     letter-spacing: 1px;
   }
 
-  /* ── WELCOME SCREEN ── */
   #welcome {
     display: flex;
     flex-direction: column;
@@ -760,7 +748,6 @@
 
   * { scrollbar-width: thin; scrollbar-color: var(--neon-cyan) transparent; }
 
-  /* ── TOAST ── */
   #toast {
     position: fixed;
     bottom: 80px;
@@ -783,7 +770,6 @@
     transform: translateX(-50%) translateY(0);
   }
 
-  /* ── FLOATING PARTICLES ── */
   #particles {
     position: fixed;
     inset: 0;
@@ -808,7 +794,6 @@
     100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
   }
 
-  /* ── CORNER DECORATIONS ── */
   .corner-tl, .corner-tr, .corner-bl, .corner-br {
     position: fixed;
     width: 20px; height: 20px;
@@ -869,7 +854,6 @@
 <div id="particles"></div>
 
 <div id="app">
-  <!-- HEADER -->
   <div id="header">
     <div class="logo">NEX<span>US</span> <span style="font-size:0.7rem;color:var(--text-dim);letter-spacing:2px;">// AI CORE</span></div>
     <div class="header-status">
@@ -880,15 +864,12 @@
     </div>
   </div>
 
-  <!-- API KEY BAR -->
   <div id="api-banner">
     <label>⬡ CLOUDFLARE PROXY</label>
     <span class="key-status" id="key-status" style="color:var(--neon-green)">[ CONNECTED ]</span>
   </div>
 
-  <!-- BODY -->
   <div id="body">
-    <!-- SIDEBAR -->
     <div id="sidebar">
       <div class="sidebar-section">
         <div class="sidebar-label">// MODE</div>
@@ -934,9 +915,7 @@
       </div>
     </div>
 
-    <!-- MAIN -->
     <div id="main">
-      <!-- CHAT PANEL -->
       <div id="chat-window">
         <div id="welcome">
           <div class="welcome-title">NEXUS</div>
@@ -956,7 +935,6 @@
         </div>
       </div>
 
-      <!-- INPUT BAR -->
       <div>
         <div id="attachments-row"></div>
         <div id="input-bar">
@@ -977,6 +955,12 @@
 
 <script>
 const WORKER_URL = 'https://nuxus3211.thameem7185.workers.dev';
+
+// ElevenLabs Configuration (Replace YOUR_ELEVENLABS_API_KEY with your key)
+const ELEVENLABS_API_KEY = "YOUR_ELEVENLABS_API_KEY"; 
+// J.A.R.V.I.S Style Voice ID (Defaulting to George - Warm, British Male Voice)
+const ELEVENLABS_VOICE_ID = "JBFqnCBsd6RMkjVDRZzb"; 
+
 let currentMode = 'chat';
 let messages = [];
 let isThinking = false;
@@ -987,13 +971,12 @@ let msgUid = 0;
 const rawMessageStore = {};
 const codeSnippetStore = {};
 
-// ── VOICE (speech-to-text + text-to-speech) ──
 let recognition = null;
 let isRecording = false;
 let autoVoiceMode = false;
 let jarvisVoice = null;
-let voicesReady = false;
-let currentUtterance = null;
+let currentAudioSource = null;
+let audioCtx = null;
 let currentSpeakingBtn = null;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1218,9 +1201,6 @@ function autoResize(el) {
   el.style.height = Math.min(el.scrollHeight, 160) + 'px';
 }
 
-/* ────────────────────────────────────────────────
-   VOICE INPUT — speech-to-text via Web Speech API
-   ──────────────────────────────────────────────── */
 function initRecognition() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return null;
@@ -1266,7 +1246,6 @@ function initRecognition() {
     btn.classList.remove('recording');
     btn.textContent = '🎙';
     if (!isThinking) setOnlineStatus();
-    // Auto-send once the recognizer settles on a final transcript
     if (rec._gotFinal && document.getElementById('msg-input').value.trim()) {
       rec._gotFinal = false;
       sendMessage();
@@ -1290,19 +1269,13 @@ function toggleRecording() {
       document.getElementById('msg-input').value = '';
       recognition.start();
     } catch (err) {
-      // recognition already active — restart cleanly
       recognition.stop();
     }
   }
 }
 
 /* ────────────────────────────────────────────────
-   VOICE OUTPUT — text-to-speech, tuned toward a
-   deep, calm, precise "AI assistant" delivery.
-   Note: this uses the browser's built-in speech
-   synthesis voices — it approximates a JARVIS-style
-   tone (deep, male, measured) but cannot literally
-   reproduce the exact copyrighted movie voice.
+   VOICE OUTPUT ENGINE (ELEVENLABS + FALLBACK)
    ──────────────────────────────────────────────── */
 function pickJarvisVoice() {
   const voices = speechSynthesis.getVoices();
@@ -1311,13 +1284,8 @@ function pickJarvisVoice() {
     v => /Daniel/i.test(v.name) && /en-GB/i.test(v.lang),
     v => /Google UK English Male/i.test(v.name),
     v => /Microsoft Ryan/i.test(v.name),
-    v => /Microsoft George/i.test(v.name),
-    v => /en-GB/i.test(v.lang) && /male/i.test(v.name),
     v => /en-GB/i.test(v.lang),
-    v => /Google US English/i.test(v.name) && /male/i.test(v.name),
     v => /male/i.test(v.name) && /en/i.test(v.lang),
-    v => /en-US/i.test(v.lang),
-    v => /en/i.test(v.lang),
   ];
   for (const test of preferenceOrder) {
     const match = voices.find(test);
@@ -1327,11 +1295,7 @@ function pickJarvisVoice() {
 }
 
 if ('speechSynthesis' in window) {
-  speechSynthesis.onvoiceschanged = () => {
-    jarvisVoice = pickJarvisVoice();
-    voicesReady = true;
-  };
-  // Some browsers populate voices synchronously
+  speechSynthesis.onvoiceschanged = () => { jarvisVoice = pickJarvisVoice(); };
   jarvisVoice = pickJarvisVoice();
 }
 
@@ -1349,44 +1313,84 @@ function stripForSpeech(text) {
 }
 
 function stopSpeaking() {
+  if (currentAudioSource) {
+    try { currentAudioSource.stop(); } catch(e){}
+    currentAudioSource = null;
+  }
   speechSynthesis.cancel();
   if (currentSpeakingBtn) {
     currentSpeakingBtn.classList.remove('speaking');
     currentSpeakingBtn.textContent = '🔊 SPEAK';
   }
   currentSpeakingBtn = null;
-  currentUtterance = null;
 }
 
-function speakText(text, btn) {
-  if (!('speechSynthesis' in window)) {
-    showToast('VOICE OUTPUT NOT SUPPORTED ON THIS BROWSER');
-    return;
-  }
-  const wasSpeakingThis = currentSpeakingBtn === btn && speechSynthesis.speaking;
+async function speakText(text, btn) {
+  const wasSpeakingThis = currentSpeakingBtn === btn && (currentAudioSource || speechSynthesis.speaking);
   stopSpeaking();
-  if (wasSpeakingThis) return; // treat as a stop toggle
+  if (wasSpeakingThis) return;
 
   const clean = stripForSpeech(text);
   if (!clean) return;
-
-  const utter = new SpeechSynthesisUtterance(clean);
-  if (!jarvisVoice) jarvisVoice = pickJarvisVoice();
-  if (jarvisVoice) utter.voice = jarvisVoice;
-  utter.pitch = 0.75;   // deeper register
-  utter.rate = 0.98;    // measured, precise cadence
-  utter.volume = 1;
 
   if (btn) {
     btn.classList.add('speaking');
     btn.textContent = '⏹ STOP';
     currentSpeakingBtn = btn;
   }
-  utter.onend = () => stopSpeaking();
-  utter.onerror = () => stopSpeaking();
 
-  currentUtterance = utter;
-  speechSynthesis.speak(utter);
+  // Use ElevenLabs API if key is present
+  if (ELEVENLABS_API_KEY && ELEVENLABS_API_KEY !== "YOUR_ELEVENLABS_API_KEY") {
+    try {
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'xi-api-key': ELEVENLABS_API_KEY
+        },
+        body: JSON.stringify({
+          text: clean,
+          model_id: "eleven_monolingual_v1",
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.85
+          }
+        })
+      });
+
+      if (!response.ok) throw new Error('API Request Failed');
+
+      const arrayBuffer = await response.arrayBuffer();
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      const source = audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioCtx.destination);
+      
+      source.onended = () => stopSpeaking();
+      currentAudioSource = source;
+      source.start(0);
+      return;
+    } catch (err) {
+      console.warn('ElevenLabs speech failed, falling back to local TTS engine:', err);
+    }
+  }
+
+  // Fallback to local Speech Synthesis
+  if ('speechSynthesis' in window) {
+    const utter = new SpeechSynthesisUtterance(clean);
+    if (!jarvisVoice) jarvisVoice = pickJarvisVoice();
+    if (jarvisVoice) utter.voice = jarvisVoice;
+    utter.pitch = 0.8;
+    utter.rate = 0.95;
+    utter.onend = () => stopSpeaking();
+    utter.onerror = () => stopSpeaking();
+    speechSynthesis.speak(utter);
+  } else {
+    showToast('VOICE OUTPUT NOT SUPPORTED');
+    stopSpeaking();
+  }
 }
 
 function toggleAutoVoice() {
