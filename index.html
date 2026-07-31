@@ -546,6 +546,96 @@
 
   #attach-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
+  #mic-btn {
+    background: transparent;
+    border: 1px solid var(--neon-green);
+    color: var(--neon-green);
+    width: 46px; height: 46px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  #mic-btn:hover {
+    background: var(--neon-green);
+    color: var(--dark-bg);
+    box-shadow: var(--glow-green);
+  }
+
+  #mic-btn.recording {
+    background: var(--neon-pink);
+    border-color: var(--neon-pink);
+    color: var(--dark-bg);
+    box-shadow: 0 0 8px var(--neon-pink), 0 0 24px #ff008070;
+    animation: micPulse 1s ease-in-out infinite;
+  }
+
+  @keyframes micPulse {
+    0%, 100% { box-shadow: 0 0 8px var(--neon-pink), 0 0 16px #ff008060; }
+    50% { box-shadow: 0 0 14px var(--neon-pink), 0 0 32px #ff0080a0; }
+  }
+
+  #mic-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  #voice-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--text-dim);
+    color: var(--text-dim);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  #voice-toggle-btn.active {
+    color: var(--neon-green);
+    border-color: var(--neon-green);
+    box-shadow: var(--glow-green);
+  }
+
+  #voice-toggle-btn:hover { opacity: 0.85; }
+
+  .msg-speak-btn {
+    background: transparent;
+    border: 1px solid currentColor;
+    color: inherit;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.55rem;
+    letter-spacing: 1px;
+    padding: 2px 7px;
+    cursor: pointer;
+    opacity: 0.55;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    order: 3;
+  }
+
+  .msg.user .msg-speak-btn { order: -2; }
+
+  .msg-speak-btn:hover {
+    opacity: 1;
+    background: currentColor;
+  }
+  .msg.assistant .msg-speak-btn:hover { color: var(--dark-bg); box-shadow: var(--glow-cyan); }
+  .msg.user .msg-speak-btn:hover { color: var(--dark-bg); box-shadow: var(--glow-pink); }
+
+  .msg-speak-btn.speaking {
+    opacity: 1;
+    color: var(--neon-yellow) !important;
+    border-color: var(--neon-yellow);
+    box-shadow: 0 0 8px var(--neon-yellow), 0 0 20px #ffff0040;
+  }
+
   /* ── ATTACHMENTS PREVIEW ── */
   #attachments-row {
     display: none;
@@ -735,8 +825,11 @@
     .welcome-grid { grid-template-columns: 1fr; }
     .welcome-title { font-size: 1.6rem; }
     #input-bar { padding-left: 14px; padding-right: 14px; }
-    #send-btn, #attach-btn { width: 42px; height: 42px; }
+    #send-btn, #attach-btn, #mic-btn { width: 42px; height: 42px; }
     #msg-input { min-height: 42px; }
+    .header-status { gap: 10px; }
+    .header-time { display: none; }
+    #voice-toggle-btn { font-size: 0.55rem; padding: 3px 7px; }
   }
 
   .msg-bubble ul, .msg-bubble ol {
@@ -783,6 +876,7 @@
       <div class="status-dot"></div>
       <span id="status-text" style="color:var(--text-dim)">STANDBY</span>
       <span class="header-time" id="clock">--:--:--</span>
+      <button id="voice-toggle-btn" onclick="toggleAutoVoice()" title="Auto-speak AI replies">🔊 JARVIS: OFF</button>
     </div>
   </div>
 
@@ -868,6 +962,7 @@
         <div id="input-bar">
           <input type="file" id="file-input" multiple hidden onchange="handleFileSelect(event)">
           <button id="attach-btn" onclick="openFileDrawer()" title="Attach files">📎</button>
+          <button id="mic-btn" onclick="toggleRecording()" title="Voice input">🎙</button>
           <textarea id="msg-input" placeholder="// Enter command..." rows="1"
             onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
           <button id="send-btn" onclick="sendMessage()" title="Send (Enter)">➤</button>
@@ -891,6 +986,15 @@ let attachedFiles = [];
 let msgUid = 0;
 const rawMessageStore = {};
 const codeSnippetStore = {};
+
+// ── VOICE (speech-to-text + text-to-speech) ──
+let recognition = null;
+let isRecording = false;
+let autoVoiceMode = false;
+let jarvisVoice = null;
+let voicesReady = false;
+let currentUtterance = null;
+let currentSpeakingBtn = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   updateClock();
@@ -1114,10 +1218,191 @@ function autoResize(el) {
   el.style.height = Math.min(el.scrollHeight, 160) + 'px';
 }
 
+/* ────────────────────────────────────────────────
+   VOICE INPUT — speech-to-text via Web Speech API
+   ──────────────────────────────────────────────── */
+function initRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const rec = new SR();
+  rec.continuous = false;
+  rec.interimResults = true;
+  rec.lang = 'en-US';
+
+  rec.onstart = () => {
+    isRecording = true;
+    const btn = document.getElementById('mic-btn');
+    btn.classList.add('recording');
+    btn.textContent = '⏹';
+    document.getElementById('status-text').textContent = 'LISTENING';
+    document.getElementById('status-text').style.color = 'var(--neon-pink)';
+  };
+
+  rec.onresult = (e) => {
+    let finalTranscript = '';
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finalTranscript += t;
+      else interim += t;
+    }
+    const input = document.getElementById('msg-input');
+    input.value = (finalTranscript || interim).trim();
+    autoResize(input);
+    if (finalTranscript) rec._gotFinal = true;
+  };
+
+  rec.onerror = (e) => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      showToast('MIC ACCESS DENIED');
+    } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      showToast('VOICE INPUT ERROR: ' + e.error);
+    }
+  };
+
+  rec.onend = () => {
+    isRecording = false;
+    const btn = document.getElementById('mic-btn');
+    btn.classList.remove('recording');
+    btn.textContent = '🎙';
+    if (!isThinking) setOnlineStatus();
+    // Auto-send once the recognizer settles on a final transcript
+    if (rec._gotFinal && document.getElementById('msg-input').value.trim()) {
+      rec._gotFinal = false;
+      sendMessage();
+    }
+  };
+
+  return rec;
+}
+
+function toggleRecording() {
+  if (!recognition) recognition = initRecognition();
+  if (!recognition) {
+    showToast('VOICE INPUT NOT SUPPORTED ON THIS BROWSER');
+    return;
+  }
+  if (isRecording) {
+    recognition.stop();
+  } else {
+    if (isThinking) return;
+    try {
+      document.getElementById('msg-input').value = '';
+      recognition.start();
+    } catch (err) {
+      // recognition already active — restart cleanly
+      recognition.stop();
+    }
+  }
+}
+
+/* ────────────────────────────────────────────────
+   VOICE OUTPUT — text-to-speech, tuned toward a
+   deep, calm, precise "AI assistant" delivery.
+   Note: this uses the browser's built-in speech
+   synthesis voices — it approximates a JARVIS-style
+   tone (deep, male, measured) but cannot literally
+   reproduce the exact copyrighted movie voice.
+   ──────────────────────────────────────────────── */
+function pickJarvisVoice() {
+  const voices = speechSynthesis.getVoices();
+  if (!voices.length) return null;
+  const preferenceOrder = [
+    v => /Daniel/i.test(v.name) && /en-GB/i.test(v.lang),
+    v => /Google UK English Male/i.test(v.name),
+    v => /Microsoft Ryan/i.test(v.name),
+    v => /Microsoft George/i.test(v.name),
+    v => /en-GB/i.test(v.lang) && /male/i.test(v.name),
+    v => /en-GB/i.test(v.lang),
+    v => /Google US English/i.test(v.name) && /male/i.test(v.name),
+    v => /male/i.test(v.name) && /en/i.test(v.lang),
+    v => /en-US/i.test(v.lang),
+    v => /en/i.test(v.lang),
+  ];
+  for (const test of preferenceOrder) {
+    const match = voices.find(test);
+    if (match) return match;
+  }
+  return voices[0];
+}
+
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = () => {
+    jarvisVoice = pickJarvisVoice();
+    voicesReady = true;
+  };
+  // Some browsers populate voices synchronously
+  jarvisVoice = pickJarvisVoice();
+}
+
+function stripForSpeech(text) {
+  return text
+    .replace(/```[\s\S]*?```/g, ' Code block omitted. ')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/[*_#>~]/g, '')
+    .replace(/^\s*[-•]\s+/gm, '')
+    .replace(/\n{2,}/g, '. ')
+    .replace(/\n/g, ' ')
+    .trim();
+}
+
+function stopSpeaking() {
+  speechSynthesis.cancel();
+  if (currentSpeakingBtn) {
+    currentSpeakingBtn.classList.remove('speaking');
+    currentSpeakingBtn.textContent = '🔊 SPEAK';
+  }
+  currentSpeakingBtn = null;
+  currentUtterance = null;
+}
+
+function speakText(text, btn) {
+  if (!('speechSynthesis' in window)) {
+    showToast('VOICE OUTPUT NOT SUPPORTED ON THIS BROWSER');
+    return;
+  }
+  const wasSpeakingThis = currentSpeakingBtn === btn && speechSynthesis.speaking;
+  stopSpeaking();
+  if (wasSpeakingThis) return; // treat as a stop toggle
+
+  const clean = stripForSpeech(text);
+  if (!clean) return;
+
+  const utter = new SpeechSynthesisUtterance(clean);
+  if (!jarvisVoice) jarvisVoice = pickJarvisVoice();
+  if (jarvisVoice) utter.voice = jarvisVoice;
+  utter.pitch = 0.75;   // deeper register
+  utter.rate = 0.98;    // measured, precise cadence
+  utter.volume = 1;
+
+  if (btn) {
+    btn.classList.add('speaking');
+    btn.textContent = '⏹ STOP';
+    currentSpeakingBtn = btn;
+  }
+  utter.onend = () => stopSpeaking();
+  utter.onerror = () => stopSpeaking();
+
+  currentUtterance = utter;
+  speechSynthesis.speak(utter);
+}
+
+function toggleAutoVoice() {
+  autoVoiceMode = !autoVoiceMode;
+  const btn = document.getElementById('voice-toggle-btn');
+  btn.textContent = autoVoiceMode ? '🔊 JARVIS: ON' : '🔊 JARVIS: OFF';
+  btn.classList.toggle('active', autoVoiceMode);
+  showToast(autoVoiceMode ? 'AUTO-VOICE ENABLED' : 'AUTO-VOICE DISABLED');
+  if (!autoVoiceMode) stopSpeaking();
+}
+
 async function callCohere() {
   isThinking = true;
   document.getElementById('send-btn').disabled = true;
   document.getElementById('attach-btn').disabled = true;
+  document.getElementById('mic-btn').disabled = true;
   document.getElementById('status-text').textContent = 'PROCESSING';
   document.getElementById('status-text').style.color = 'var(--neon-yellow)';
 
@@ -1146,6 +1431,7 @@ async function callCohere() {
       isThinking = false;
       document.getElementById('send-btn').disabled = false;
       document.getElementById('attach-btn').disabled = false;
+      document.getElementById('mic-btn').disabled = false;
       setOnlineStatus();
       return;
     }
@@ -1168,6 +1454,7 @@ async function callCohere() {
   isThinking = false;
   document.getElementById('send-btn').disabled = false;
   document.getElementById('attach-btn').disabled = false;
+  document.getElementById('mic-btn').disabled = false;
   setOnlineStatus();
 }
 
@@ -1205,12 +1492,24 @@ function appendMessage(role, content, isError=false) {
     <div class="msg-header">
       <span>${label}${modeLabel}</span>
       <button class="msg-copy-btn" onclick="copyMessageText(this, ${uid})" title="Copy message text">⧉ COPY</button>
+      ${!isError ? `<button class="msg-speak-btn" onclick="speakMessage(this, ${uid})" title="Read aloud">🔊 SPEAK</button>` : ''}
     </div>
     <div class="msg-bubble">${isError ? `<span style="color:var(--neon-pink)">${escHtml(content)}</span>` : renderMarkdown(content)}</div>`;
 
   win.appendChild(div);
   scrollDown();
+
+  if (role === 'assistant' && !isError && autoVoiceMode) {
+    const speakBtn = div.querySelector('.msg-speak-btn');
+    speakText(content, speakBtn);
+  }
+
   return div;
+}
+
+function speakMessage(btn, uid) {
+  const text = rawMessageStore[uid] ?? '';
+  speakText(text, btn);
 }
 
 function copyMessageText(btn, uid) {
