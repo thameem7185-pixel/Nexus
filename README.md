@@ -10,3 +10,9 @@ A lightweight, browser-based AI workspace with a cyberpunk HUD interface. Built 
 
 3. One-Liner (For Social Media / Preview Card)
 NEXUS: A next-generation, high-performance cybernetic AI terminal engineered for code generation, complex reasoning, and seamless problem-solving.
+
+      About the developer
+
+Tech enthusiast with a hands-on passion for electronics hardware — from diagnosis to component-level fixes. Music lover, always exploring the mix of creativity and technical skill. Ambition: to build strong creative and technical skills, and grow into a cybersecurity professional and ethical hacker.
+
+  
